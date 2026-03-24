@@ -3,74 +3,49 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RFM會員互動策略系統 MVP</title>
+  <title>RFM + 招式生成器</title>
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; background:#f5f5f5; padding:20px; }
-    .card { background:#fff; padding:20px; border-radius:10px; max-width:800px; margin:auto; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
-    h2 { margin-top:0; }
-    select { padding:10px; margin-top:10px; width:100%; }
-
+    body { font-family: Arial; background:#f5f5f5; padding:20px; }
+    .card { background:#fff; padding:20px; border-radius:10px; max-width:900px; margin:auto; }
+    select, button { padding:10px; width:100%; margin-top:10px; }
     .tag { display:inline-block; padding:8px 12px; margin:5px; border-radius:20px; background:#ddd; cursor:pointer; }
     .tag.active { background:#4caf50; color:#fff; }
-
-    .chat { margin-top:20px; display:flex; flex-direction:column; gap:10px; }
-    .bubble {
-      max-width:70%; padding:12px 16px;
-      border-radius:12px;
-      background:#f1f1f1;
-      align-self:flex-start;
-      box-shadow:0 1px 2px rgba(0,0,0,0.1);
-      line-height:1.6;
-    }
-
-    .meta { font-size:12px; color:#666; margin-top:5px; }
-
-    button {
-      margin-top:15px;
-      padding:10px 16px;
-      border:none;
-      background:#2196f3;
-      color:#fff;
-      border-radius:8px;
-      cursor:pointer;
-    }
+    .bubble { background:#f1f1f1; padding:12px; margin-top:10px; border-radius:10px; }
   </style>
 </head>
 <body>
 
 <div id="app" class="card">
-  <h2>RFM 會員互動策略（手動控制版）</h2>
+  <h2>RFM + 招式 AI 文案引擎</h2>
 
-  <label>選擇會員分群</label>
+  <label>選擇分群</label>
   <select v-model="rfm">
+    <option value="lost_high">流失高價值會員</option>
     <option value="core">核心貢獻會員</option>
-    <option value="high_active_low_value">高活躍低價值會員</option>
-    <option value="churn_high_value">流失高價值會員</option>
-    <option value="churn_active">流失活躍會員</option>
-    <option value="high_value_potential">高價值潛力會員</option>
-    <option value="new">新手會員</option>
-    <option value="sleep_high_value">沉睡高價值會員</option>
     <option value="sleep">沉睡會員</option>
+    <option value="churn_active">流失活躍會員</option>
+    <option value="sleep_high">沉睡高價值會員</option>
+    <option value="active_low">高活躍低價值會員</option>
+    <option value="new">新手會員</option>
+    <option value="potential">高價值潛力會員</option>
   </select>
 
-  <label>選擇招式（最多3種）</label>
+  <label>選擇招式（最多三招）</label>
   <div>
-    <span v-for="t in tactics" :key="t"
+    <span v-for="d in tactics" :key="d"
       class="tag"
-      :class="{active: selected.includes(t)}"
-      @click="toggle(t)">
-      {{ t }}
-    </span>
+      :class="{active: selected.includes(d)}"
+      @click="toggle(d)">{{ d }}</span>
   </div>
 
   <button @click="generate">產出內容</button>
 
-  <h3>🔥 訊息範例（5則）</h3>
-  <div class="chat">
-    <div v-for="(m, i) in messages" :key="i" class="bubble">
+  <h3>🔥 訊息範例（20則）</h3>
+  <div>
+    <div v-for="(m,i) in messages" :key="i" class="bubble">
       {{ m.text }}
-      <div class="meta">招式：{{ m.combo.join('+') }}</div>
+      <div style="font-size:12px;color:#666;">招式：{{ m.combo.join('+') }}</div>
     </div>
   </div>
 </div>
@@ -84,100 +59,113 @@ createApp({
       rfm: "core",
       selected: [],
       messages: [],
+
       tactics: [
-        "情感型","利益型","稀缺型","好奇型","社會證明","行動導向","個人化","成就型",
-        "信任建立","恐懼驅動","遊戲化","VIP感","時間壓力","社群感","任務感","挑戰型",
-        "稀有機會","限時加碼","專屬福利","回饋誘因","升級感","解鎖感","即時回饋","高價值暗示",
-        "比較心理","損失厭惡","錯過焦慮","進度感","累積感","會員等級感","排名刺激","競爭刺激",
-        "故事型","場景代入","問題引導","懸念鋪陳","情境觸發","行動提示","快速決策","低門檻",
-        "高門檻價值","驚喜感","反差感","限量感","身份認同","社群歸屬","成果強調","成果預告"
-      ]
+        "情感型","利益型","稀缺型","好奇型","社會證明","行動導向","個人化","成就型","信任建立","恐懼驅動",
+        "遊戲化","VIP感","時間壓力","社群感","任務感","挑戰型","稀有機會","限時加碼","專屬福利","回饋誘因",
+        "升級感","解鎖感","即時回饋","高價值暗示","比較心理","損失厭惡","錯過焦慮","進度感","累積感","會員等級感",
+        "排名刺激","競爭刺激","故事型","場景代入","問題引導","懸念鋪陳","情境觸發","行動提示","快速決策","低門檻",
+        "高門檻","價值","驚喜感","反差感","限量感","身份認同","社群歸屬","成果強調","成果預告"
+      ],
+
+      tacticMap: {
+        情感型: ["讓你更有感受","帶來情緒連結","觸動你的內心"],
+        利益型: ["直接獲得回報","帶來實際好處"],
+        稀缺型: ["名額有限","錯過就沒有"],
+        好奇型: ["你一定會想知道","揭開秘密"],
+        社會證明: ["很多人已經在做","大家都在參與"],
+        行動導向: ["現在就開始","立即行動"],
+        個人化: ["專屬你的內容","為你量身打造"],
+        成就型: ["完成後會很有成就感","達成目標"],
+        信任建立: ["穩定可靠的選擇","值得信賴"],
+        恐懼驅動: ["錯過就可惜","再不行動會失去機會"],
+        遊戲化: ["像遊戲一樣有趣","持續闖關"],
+        VIP感: ["專屬尊榮體驗","VIP特權"],
+        時間壓力: ["限時機會","時間倒數中"],
+        社群感: ["和大家一起","共同參與"],
+        任務感: ["完成任務即可","一步一步完成"],
+        挑戰型: ["挑戰自我","突破極限"],
+        稀有機會: ["難得機會","不常出現"],
+        限時加碼: ["現在加碼","額外獎勵"],
+        專屬福利: ["專屬優惠","只有你有"],
+        回饋誘因: ["回饋滿滿","每一步都有收穫"],
+        升級感: ["等級提升","持續升級"],
+        解鎖感: ["解鎖新內容","開啟新階段"],
+        即時回饋: ["立即獲得回饋","即時獎勵"],
+        高價值暗示: ["這很值得","價值極高"],
+        比較心理: ["比別人更快","優於他人"],
+        損失厭惡: ["避免損失","不要錯過"],
+        錯過焦慮: ["錯過會後悔","現在把握"],
+        進度感: ["進度持續前進","越來越接近"],
+        累積感: ["逐步累積","持續成長"],
+        會員等級感: ["會員等級提升","尊榮象徵"],
+        排名刺激: ["排名上升","超越他人"],
+        競爭刺激: ["競爭中勝出","挑戰對手"],
+        故事型: ["一個故事開始了","帶你進入情境"],
+        場景代入: ["想像這個畫面","進入情境"],
+        問題引導: ["你是否也遇到","思考這個問題"],
+        懸念鋪陳: ["答案即將揭曉","留下伏筆"],
+        情境觸發: ["當你遇到這種情況","這時候你會"],
+        行動提示: ["下一步該做什麼","現在就開始"],
+        快速決策: ["快速做決定","不用猶豫"],
+        低門檻: ["簡單開始","輕鬆上手"],
+        高門檻: ["進階挑戰","更高層級"],
+        價值: ["高價值體驗","值得投入"],
+        驚喜感: ["意想不到的驚喜","隱藏好康"],
+        反差感: ["超乎預期","與眾不同"],
+        限量感: ["數量有限","限量釋出"],
+        身份認同: ["展現你的身份","象徵地位"],
+        社群歸屬: ["你屬於這裡","加入我們"],
+        成果強調: ["成果明確","結果可見"],
+        成果預告: ["成果即將到來","未來可期"]
+      }
     }
   },
 
   mounted() {
-    // 預設自動套用推薦招式 + 產出內容
-    this.selected = this.getRecommendedTactics(this.rfm);
+    this.selected = this.tactics.slice(0,3);
     this.generate();
-  },
-
-  watch: {
-    // 分群改變時，自動更新推薦招式 + 內容
-    rfm() {
-      this.selected = this.getRecommendedTactics(this.rfm);
-      this.generate();
-    }
   },
 
   methods: {
     toggle(t) {
       if (this.selected.includes(t)) {
         this.selected = this.selected.filter(i => i !== t);
-      } else {
-        if (this.selected.length >= 3) return;
+      } else if (this.selected.length < 3) {
         this.selected.push(t);
       }
     },
 
-    // ✅ 每個分群的推薦招式（核心邏輯）
-    getRecommendedTactics(rfm) {
-      const map = {
-        core: ["VIP感","成就型","社會證明"],
-        high_active_low_value: ["利益型","比較心理","升級感"],
-        churn_high_value: ["損失厭惡","稀缺型","情感型"],
-        churn_active: ["時間壓力","錯過焦慮","行動導向"],
-        high_value_potential: ["進度感","解鎖感","成就型"],
-        new: ["低門檻","引導型","信任建立"],
-        sleep_high_value: ["召回感","驚喜感","個人化"],
-        sleep: ["稀缺型","情感型","回饋誘因"]
-      };
-      return map[rfm] || [];
-    },
-
-    baseTemplates() {
-      const map = {
-        core: ["嘿，老朋友！你一直是我們很重要的一群人","說真的，你的參與我們都有注意到","有些專屬內容是為你準備的"],
-        high_active_low_value: ["你其實蠻常參與的","我們覺得你值得更好的回報","這次機會很適合你"],
-        churn_high_value: ["好久不見，我們其實一直在等你","你之前的貢獻我們記得","準備了一點特別的東西給你"],
-        churn_active: ["你最近還有在參與","我們想幫你更有感一點","有些新東西想讓你試試"],
-        high_value_potential: ["你其實很接近高價值了","再推一點點就會差很多","這裡有個小機會"],
-        new: ["歡迎加入！從簡單開始就好","不用想太多，照著做就可以","我們會一步一步帶你"],
-        sleep_high_value: ["好久沒看到你了","其實你可以很輕鬆回來","這次給你一點驚喜"],
-        sleep: ["有一陣子沒見了","這次任務很簡單","回來看看不會失望的"]
-      };
-      return map[this.rfm];
-    },
-
-    getRandomCombo() {
-      const shuffled = [...this.selected].sort(() => 0.5 - Math.random());
-      const count = Math.floor(Math.random() * this.selected.length) + 1;
-      return shuffled.slice(0, Math.min(count, 3));
+    baseTexts() {
+      return [
+        "現在開始還來得及","很多人已經在做了","這真的很值得試","你會有感覺","這一步很關鍵",
+        "其實很簡單","你已經接近成功","不用想太多","這會幫助你很多","機會就在現在"
+      ];
     },
 
     generate() {
-      if (this.selected.length === 0) return;
+      const results = [];
+      const pool = this.baseTexts();
 
-      const combosSet = new Set();
-      const combos = [];
+      for (let i = 0; i < 20; i++) {
+        let combos = this.selected.length === 0 ?
+          this.tactics.sort(() => 0.5 - Math.random()).slice(0,3) :
+          this.selected.sort(() => 0.5 - Math.random()).slice(0,3);
 
-      while (combos.length < 5) {
-        const combo = this.getRandomCombo();
-        const key = combo.join('+');
-        if (!combosSet.has(key)) {
-          combosSet.add(key);
-          combos.push(combo);
-        }
+        const texts = combos.map(c => {
+          const arr = this.tacticMap[c];
+          return arr[Math.floor(Math.random() * arr.length)];
+        }).join('，');
+
+        const base = pool[Math.floor(Math.random() * pool.length)];
+
+        results.push({
+          combo: combos,
+          text: `${base}。${texts}，現在參與會是很不錯的時機。`
+        });
       }
 
-      const basePool = this.baseTemplates();
-
-      this.messages = combos.map(combo => {
-        const base = basePool[Math.floor(Math.random() * basePool.length)];
-        return {
-          combo,
-          text: `${base}，這次的任務其實不難，有空可以試試看，也許會有你意想不到的收穫。`
-        };
-      });
+      this.messages = results;
     }
   }
 }).mount('#app');
